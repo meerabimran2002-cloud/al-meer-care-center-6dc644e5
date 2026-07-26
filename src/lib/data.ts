@@ -2,6 +2,7 @@ export type Doctor = {
   id: string;
   name: string;
   specialty: string;
+  department: string;
   experience: string;
   availability: string;
   rating: number;
@@ -18,6 +19,7 @@ export const doctors: Doctor[] = [
     id: "d1",
     name: "Dr. Sarah Malik",
     specialty: "Cardiologist",
+    department: "Cardiology",
     experience: "12+ yrs",
     availability: "Mon – Fri",
     rating: 4.9,
@@ -27,6 +29,7 @@ export const doctors: Doctor[] = [
     id: "d2",
     name: "Dr. Ahmed Raza",
     specialty: "Neurologist",
+    department: "Neurology",
     experience: "10+ yrs",
     availability: "Tue – Sat",
     rating: 4.8,
@@ -36,6 +39,7 @@ export const doctors: Doctor[] = [
     id: "d3",
     name: "Dr. Ayesha Khan",
     specialty: "Pediatrician",
+    department: "Pediatrics",
     experience: "8+ yrs",
     availability: "Mon – Sat",
     rating: 4.9,
@@ -45,10 +49,31 @@ export const doctors: Doctor[] = [
     id: "d4",
     name: "Dr. Imran Sheikh",
     specialty: "Orthopedic Surgeon",
+    department: "Orthopedics",
     experience: "15+ yrs",
     availability: "Wed – Sun",
     rating: 4.7,
     image: doc4,
+  },
+  {
+    id: "d5",
+    name: "Dr. Hina Qureshi",
+    specialty: "Radiologist",
+    department: "Radiology",
+    experience: "9+ yrs",
+    availability: "Mon – Fri",
+    rating: 4.8,
+    image: doc1,
+  },
+  {
+    id: "d6",
+    name: "Dr. Bilal Ansari",
+    specialty: "Emergency Physician",
+    department: "Emergency",
+    experience: "11+ yrs",
+    availability: "24 / 7",
+    rating: 4.9,
+    image: doc2,
   },
 ];
 
