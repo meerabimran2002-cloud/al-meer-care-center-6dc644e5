@@ -1,7 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { CalendarCheck, CheckCircle2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { CalendarCheck, CheckCircle2, LogIn } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { departments, doctors } from "@/lib/data";
+import { supabase } from "@/integrations/supabase/client";
+import { createAppointment } from "@/lib/appointments.functions";
 
 export const Route = createFileRoute("/appointment")({
   head: () => ({
@@ -19,7 +22,12 @@ export const Route = createFileRoute("/appointment")({
 });
 
 function AppointmentPage() {
+  const navigate = useNavigate();
+  const createFn = useServerFn(createAppointment);
+  const [authed, setAuthed] = useState<boolean | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [department, setDepartment] = useState(departments[0].name);
   const filteredDoctors = useMemo(
     () => doctors.filter((d) => d.department === department),
@@ -29,12 +37,15 @@ function AppointmentPage() {
 
   const [form, setForm] = useState({
     name: "",
-    email: "",
     phone: "",
     date: "",
     time: "10:00",
     notes: "",
   });
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session));
+  }, []);
 
   const update = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm({ ...form, [k]: e.target.value });
@@ -46,10 +57,50 @@ function AppointmentPage() {
     setDoctor(first?.name ?? "");
   };
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setError(null);
+    setLoading(true);
+    try {
+      await createFn({
+        data: {
+          patient_name: form.name,
+          patient_phone: form.phone,
+          department,
+          doctor_name: doctor,
+          appointment_date: form.date,
+          appointment_time: form.time,
+          notes: form.notes,
+        },
+      });
+      setSubmitted(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Booking failed");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (authed === false) {
+    return (
+      <div className="bg-hero">
+        <section className="mx-auto max-w-md px-4 py-20 text-center sm:px-6">
+          <h1 className="text-3xl font-bold sm:text-4xl">Sign in to book</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            To keep your appointment safe and track it in your portal, please sign in or create a
+            free patient account first.
+          </p>
+          <button
+            onClick={() => navigate({ to: "/auth" })}
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground hover:brightness-110"
+          >
+            <LogIn className="h-4 w-4" />
+            Sign in / Sign up
+          </button>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-hero">
@@ -68,15 +119,23 @@ function AppointmentPage() {
             <h2 className="mt-5 text-2xl font-bold">Appointment requested</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Thanks {form.name || "there"}! We've received your booking with {doctor} on{" "}
-              <span className="text-foreground">{form.date || "your selected date"}</span> at{" "}
+              <span className="text-foreground">{form.date}</span> at{" "}
               <span className="text-foreground">{form.time}</span>. Our team will call you shortly.
             </p>
-            <button
-              onClick={() => setSubmitted(false)}
-              className="mt-6 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:brightness-110"
-            >
-              Book another
-            </button>
+            <div className="mt-6 flex justify-center gap-2">
+              <button
+                onClick={() => setSubmitted(false)}
+                className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:brightness-110"
+              >
+                Book another
+              </button>
+              <button
+                onClick={() => navigate({ to: "/admin" })}
+                className="rounded-xl border border-black/10 bg-white px-4 py-2 text-sm font-medium hover:bg-black/5"
+              >
+                View my portal
+              </button>
+            </div>
           </div>
         ) : (
           <form onSubmit={onSubmit} className="glass-strong mt-10 rounded-3xl p-6 sm:p-8">
@@ -86,9 +145,6 @@ function AppointmentPage() {
               </Field>
               <Field label="Phone">
                 <input required value={form.phone} onChange={update("phone")} className={inputCls} placeholder="+92 ..." />
-              </Field>
-              <Field label="Email" className="sm:col-span-2">
-                <input required type="email" value={form.email} onChange={update("email")} className={inputCls} placeholder="you@email.com" />
               </Field>
               <Field label="Department">
                 <select value={department} onChange={onDepartmentChange} className={inputCls}>
@@ -126,12 +182,19 @@ function AppointmentPage() {
               </Field>
             </div>
 
+            {error && (
+              <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+
             <button
               type="submit"
-              className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-[0_10px_30px_-10px_oklch(0.55_0.24_295_/_0.5)] transition hover:brightness-110 sm:w-auto"
+              disabled={loading}
+              className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-[0_10px_30px_-10px_oklch(0.55_0.24_295_/_0.5)] transition hover:brightness-110 disabled:opacity-60 sm:w-auto"
             >
               <CalendarCheck className="h-4 w-4" />
-              Confirm Appointment
+              {loading ? "Booking..." : "Confirm Appointment"}
             </button>
           </form>
         )}
