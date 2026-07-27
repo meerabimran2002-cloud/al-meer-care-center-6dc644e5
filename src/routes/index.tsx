@@ -16,6 +16,8 @@ import exteriorImg from "@/assets/hospital-exterior.jpg";
 import lobbyImg from "@/assets/hospital-lobby.jpg";
 import wardImg from "@/assets/hospital-ward.jpg";
 import { departments, doctors, testimonials } from "@/lib/data";
+import { CursorSpotlight } from "@/components/cursor-spotlight";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -44,6 +46,8 @@ function Home() {
       {/* FULL-WIDTH HERO IMAGE */}
       <section className="relative">
         <div className="relative h-[520px] w-full overflow-hidden sm:h-[620px] lg:h-[720px]">
+          <CursorSpotlight />
+
           <img
             src={heroImg}
             alt="Al Meer Hospital modern building"
