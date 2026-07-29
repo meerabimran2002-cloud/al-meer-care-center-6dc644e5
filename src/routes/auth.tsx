@@ -122,6 +122,37 @@ function AuthPage() {
             {loading ? "Please wait..." : mode === "signin" ? "Sign in" : "Create account"}
           </button>
 
+          <div className="relative py-2">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-black/10" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-white/80 px-2 text-xs text-muted-foreground">or</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={async () => {
+              setLoading(true);
+              setError(null);
+              const result = await lovable.auth.signInWithOAuth("google", {
+                redirect_uri: window.location.origin,
+              });
+              setLoading(false);
+              if (result.error) {
+                setError(result.error.message || "Google sign-in failed");
+              } else if (!result.redirected) {
+                navigate({ to: "/admin" });
+              }
+            }}
+            disabled={loading}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-black/10 bg-white px-5 py-3 text-sm font-medium text-foreground shadow-sm transition hover:bg-black/5 disabled:opacity-60"
+          >
+            <GoogleLogo className="h-4 w-4" />
+            Continue with Google
+          </button>
+
           <button
             type="button"
             onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
